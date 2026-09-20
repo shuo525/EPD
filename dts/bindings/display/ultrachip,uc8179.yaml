@@ -1,0 +1,21 @@
+description: UltraChip UC8179 electrophoretic display controller
+
+compatible: "ultrachip,uc8179"
+
+include: spi-device.yaml
+
+properties:
+  dc-gpios:
+    type: phandle-array
+    required: true
+    description: Data/command select GPIO, active high.
+
+  res-gpios:
+    type: phandle-array
+    required: true
+    description: Hardware reset GPIO, active high in this binding.
+
+  busy-gpios:
+    type: phandle-array
+    required: true
+    description: UC8179 BUSY_N input, active low while the controller is busy.

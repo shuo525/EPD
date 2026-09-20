@@ -1,0 +1,46 @@
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/pinctrl/nrf-pinctrl.h>
+
+/* UART0's default RTS/CTS/TX/RX pins overlap the EPD control pins. */
+&uart0 {
+	status = "disabled";
+};
+
+&pinctrl {
+	epd_spi_default: epd_spi_default {
+		group1 {
+			psels = <NRF_PSEL(SPIM_SCK, 0, 4)>,
+				<NRF_PSEL(SPIM_MOSI, 0, 3)>,
+				<NRF_PSEL_DISCONNECTED(SPIM_MISO)>;
+		};
+	};
+
+	epd_spi_sleep: epd_spi_sleep {
+		group1 {
+			psels = <NRF_PSEL(SPIM_SCK, 0, 4)>,
+				<NRF_PSEL(SPIM_MOSI, 0, 3)>,
+				<NRF_PSEL_DISCONNECTED(SPIM_MISO)>;
+			low-power-enable;
+		};
+	};
+};
+
+&spi1 {
+	status = "okay";
+	pinctrl-0 = <&epd_spi_default>;
+	pinctrl-1 = <&epd_spi_sleep>;
+	pinctrl-names = "default", "sleep";
+	cs-gpios = <&gpio0 5 GPIO_ACTIVE_LOW>;
+
+	epd: uc8179@0 {
+		compatible = "ultrachip,uc8179";
+		reg = <0>;
+		spi-max-frequency = <4000000>;
+		dc-gpios = <&gpio0 6 GPIO_ACTIVE_HIGH>;
+		res-gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
+		/* UC8179 BUSY_N is low while the controller is busy and high when ready. */
+		/* BUSY_N is active-low; the weak pull-up also covers modules that
+		 * leave this output open-drain when idle. */
+		busy-gpios = <&gpio0 8 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+	};
+};
