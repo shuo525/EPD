@@ -13,5 +13,9 @@ project(hello_world)
 
 target_sources(app PRIVATE
   src/main.c
+  src/ble_epd.c
+  src/epd_frame_rx.c
+  src/epd_text.c
+  src/font_cn.c
   src/image_asset.c
 )

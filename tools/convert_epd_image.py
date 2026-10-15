@@ -82,19 +82,51 @@ def make_solid_red() -> tuple[bytes, bytes, Image.Image]:
     return kw_plane, red_plane, preview
 
 
+def make_solid_white() -> tuple[bytes, bytes, Image.Image]:
+    """Create the UC8179 plane combination used for a full white screen."""
+    kw_plane = bytes([0x00]) * FRAME_BYTES
+    red_plane = bytes([0xFF]) * FRAME_BYTES
+    preview = Image.new("RGB", (WIDTH, HEIGHT), (255, 255, 255))
+    return kw_plane, red_plane, preview
+
+
+def make_solid_black() -> tuple[bytes, bytes, Image.Image]:
+    """Create the UC8179 plane combination used for a full black screen."""
+    kw_plane = bytes([0xFF]) * FRAME_BYTES
+    red_plane = bytes([0xFF]) * FRAME_BYTES
+    preview = Image.new("RGB", (WIDTH, HEIGHT), (0, 0, 0))
+    return kw_plane, red_plane, preview
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("source", type=Path, nargs="?")
-    parser.add_argument("--output-dir", type=Path, default=Path("src"))
+    parser.add_argument(
+        "--output-dir", type=Path, default=Path("assets/generated/image")
+    )
     parser.add_argument(
         "--solid-red",
         action="store_true",
         help="generate a full-screen red diagnostic pattern",
     )
+    parser.add_argument(
+        "--solid-white",
+        action="store_true",
+        help="generate a full-screen white diagnostic pattern",
+    )
+    parser.add_argument(
+        "--solid-black",
+        action="store_true",
+        help="generate a full-screen black diagnostic pattern",
+    )
     args = parser.parse_args()
 
     if args.solid_red:
         kw_plane, red_plane, preview = make_solid_red()
+    elif args.solid_white:
+        kw_plane, red_plane, preview = make_solid_white()
+    elif args.solid_black:
+        kw_plane, red_plane, preview = make_solid_black()
     else:
         if args.source is None:
             parser.error("source is required unless --solid-red is used")
@@ -124,6 +156,8 @@ extern const uint8_t epd_image_red[EPD_IMAGE_FRAME_BYTES];
 
     (args.output_dir / "image_asset.h").write_text(header, encoding="ascii")
     (args.output_dir / "image_asset.c").write_text(source, encoding="ascii")
+    (args.output_dir / "image_kw.bin").write_bytes(kw_plane)
+    (args.output_dir / "image_red.bin").write_bytes(red_plane)
     preview.save(args.output_dir / "image_preview.png")
 
     print(f"Generated {len(kw_plane)}-byte K/W plane and {len(red_plane)}-byte red plane")
